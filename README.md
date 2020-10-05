@@ -1,4 +1,5 @@
 # BlazorApp3
+Repro of this bug: https://github.com/Blazored/SessionStorage/issues/33
 
 To repro the error:
 
