@@ -1,0 +1,214 @@
+﻿@page "/counter"
+
+<h1>Counter</h1>
+
+<p>Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+@code {
+    private int currentCount = 0;
+
+    [Inject]
+    protected Blazored.SessionStorage.ISessionStorageService sessionStorage { get; set; }
+
+
+    class ComplexType
+    {
+        public int Id { get; set; }
+
+        public ComplexType Subtree { get; set; }
+
+        public List<ComplexType> Children { get; set; }
+
+        public string S1 { get; set; } = "sdfsdfsdfsdfsf";
+
+        public string S2 { get; set; } = "sdfsdfsdfsdfsf";
+
+        public string S3 { get; set; } = "sdfsdfsdfsdfsf";
+
+        public string S4 { get; set; } = "sdfsdfsdfsdfsf";
+
+        public string S5 { get; set; } = "sdfsdfsdfsdfsf";
+
+
+        public void AddChild(ComplexType complexType)
+        {
+            if (this.Children == null)
+            {
+                this.Children = new List<ComplexType>();
+            }
+
+            this.Children.Add(complexType);
+        }
+
+        public void AddChildren()
+        {
+            for (int i = 1; i < 6; i++)
+            {
+                var child = new ComplexType() { Id = i };
+                AddChild(child);
+
+                for (int j = 0; j < 5; j++)
+                {
+                    var grandchild = new ComplexType() { Id = j };
+                    child.AddChild(grandchild);
+                }
+            }
+        }
+
+
+        public void AddRandomChildren()
+        {
+            Random random = new Random();
+
+            int n = random.Next(10) - 4;
+
+            if (n > 0)
+            {
+                for (int j = 1; j < n; j++)
+                {
+                    var child = new ComplexType() { Id = j };
+                    AddChild(child);
+
+                    child.AddRandomChildren();
+                }
+            }
+        }
+    }
+
+    private async Task IncrementCount()
+    {
+        #region repro
+        /*
+        ComplexType repro = new ComplexType()
+        {
+            Id = 0,
+            Children = new List<ComplexType>()
+            {
+                new ComplexType() { Id = 1 },
+                new ComplexType() { Id = 2 },
+                new ComplexType() { Id = 3 },
+                new ComplexType() { Id = 4 },
+                new ComplexType() { Id = 5 },
+                new ComplexType() { Id = 6 },
+                new ComplexType()
+                {
+                    Id = 7,
+                     Children = new List<ComplexType>()
+                     {
+                         new ComplexType(),
+                         new ComplexType()
+                         {
+                             // $1
+                             Children = new List<ComplexType>()
+                             {
+                                  new ComplexType(),
+                                  new ComplexType()
+                                  {
+                                      // $3
+                                      // 2
+                                      Children = new List<ComplexType>()
+                                      {
+                                          new ComplexType()
+                                          {
+                                              // $4
+                                              // 2
+                                              Children = new List<ComplexType>()
+                                              {
+                                                  new ComplexType(),
+                                                  new ComplexType()
+                                                  {
+                                                      // $5
+                                                      // 3
+                                                      Children = new List<ComplexType>()
+                                                      {
+                                                          new ComplexType()
+                                                          {
+
+                                                              Children = new List<ComplexType>()
+                                                              {
+
+                                                              }
+                                                          },
+                                                          new ComplexType()
+                                                          {
+
+                                                              Children = new List<ComplexType>()
+                                                              {
+
+                                                              }
+                                                          },
+                                                          new ComplexType()
+                                                          {
+
+                                                              Children = new List<ComplexType>()
+                                                              {
+
+                                                              }
+                                                          }
+                                                      }
+                                                  }
+                                              }
+                                          },
+                                          new ComplexType()
+                                          {
+                                              Children = new List<ComplexType>()
+                                              {
+                                                  new ComplexType()
+                                                  {
+                                                      Children = new List<ComplexType>()
+                                                      {
+                                                          new ComplexType()
+                                                      }
+                                                  }
+                                              }
+                                          },
+                                      }
+                                  },
+                                  new ComplexType(),
+                             }
+                         }
+                     }
+                },
+                new ComplexType() { Id = 8 },
+                new ComplexType() { Id = 9 },
+            }
+        };
+        repro.Subtree = repro.Children.First(c => c.Id == 8);
+        */
+        #endregion
+
+
+        ComplexType complexType;
+
+        var jsonString = System.IO.File.ReadAllText("file.json");
+        complexType = System.Text.Json.JsonSerializer.Deserialize<ComplexType>(jsonString);
+
+        /*
+        ComplexType complexType = new ComplexType() { Id = 0 };
+
+        for (int i = 1; i < 10; i++)
+        {
+            ComplexType child = new ComplexType() { Id = i };
+
+            //child.AddChildren();
+            child.AddRandomChildren();
+
+            if (child.Children != null)
+            {
+                complexType.Subtree = child;
+            }
+
+            complexType.AddChild(child);
+        }
+        */
+        //  complexType.Subtree = complexType.Children[5];
+
+        await this.sessionStorage.SetItemAsync("Test", complexType);
+        await this.sessionStorage.SetItemAsync<ComplexType>("Test", null);
+
+        currentCount++;
+    }
+
+}
